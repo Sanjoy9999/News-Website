@@ -9,8 +9,11 @@ const returnHomePage = document.querySelector('footer i');
 async function fetchNews(category = 'general') {
     try {
         const response = await fetch(`${apiUrl}?country=us&category=${category}&apiKey=${apiKey}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         const data = await response.json();
-        return data.articles;
+        return data.articles || []; // Ensure to return an empty array if articles are undefined
     } catch (error) {
         console.error('Error fetching news:', error);
         return [];
@@ -42,12 +45,20 @@ function displayArticles(articles) {
 }
 
 async function loadNews(category = 'general') {
-    const articles = await fetchNews(category);
-    if (articles.length > 0) {
-        displayFeaturedArticle(articles[0]);
-        displayArticles(articles.slice(1));
+    try {
+        const articles = await fetchNews(category);
+        if (articles.length > 0) {
+            displayFeaturedArticle(articles[0]);
+            displayArticles(articles.slice(1));
+        } else {
+            featuredContent.innerHTML = `<p>No articles found for this category.</p>`;
+        }
+    } catch (error) {
+        console.error('Failed to load news:', error);
+        featuredContent.innerHTML = `<p>Error loading articles. Please try again later.</p>`;
     }
 }
+
 
 categoryLinks.forEach(link => {
     link.addEventListener('click', (e) => {
